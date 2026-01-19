@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../onboarding/onboarding.dart';
-import '../login/pages/login.dart';
+import '../daftar/pages/daftar.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -68,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
+        MaterialPageRoute(builder: (_) => const RegisterPage()),
       );
     }
   }
