@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../daftar/pages/daftar.dart';
+import '../../login/pages/login.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _RegisterPageState extends State<RegisterPage> {
   DateTime? lastPressed;
-  // Variabel untuk mengontrol show/hide password
-  bool _isObscure = true;
+  bool _isObscure = true; // Status show/hide password
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +24,10 @@ class _LoginPageState extends State<LoginPage> {
             now.difference(lastPressed!) > const Duration(seconds: 2)) {
           lastPressed = now;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tekan sekali lagi untuk keluar')),
+            const SnackBar(
+              content: Text('Tekan sekali lagi untuk keluar'),
+              duration: Duration(seconds: 2),
+            ),
           );
         } else {
           SystemNavigator.pop();
@@ -47,29 +49,67 @@ class _LoginPageState extends State<LoginPage> {
                 child: Container(
                   width: 350,
                   padding: const EdgeInsets.symmetric(
-                    vertical: 40,
+                    vertical: 30,
                     horizontal: 25,
                   ),
+                  margin: const EdgeInsets.symmetric(vertical: 40),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        "Masuk",
+                        "Daftar",
                         style: TextStyle(
-                          fontSize: 26,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
+
+                      // Tombol Google
+                      OutlinedButton.icon(
+                        onPressed: () {},
+                        icon: Image.asset(
+                          'assets/images/google.png',
+                          height: 24,
+                        ),
+                        label: const Text(
+                          "Masuk dengan Google",
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: const StadiumBorder(),
+                          side: const BorderSide(color: Color(0xFFEEEEEE)),
+                        ),
+                      ),
+
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 15),
+                        child: Text(
+                          "atau",
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+
                       customTextField("Nama lengkap"),
-                      const SizedBox(height: 20),
-                      // Menggunakan field password
-                      customTextField("Kata sandi", isPassword: true),
                       const SizedBox(height: 15),
+                      customTextField("Email"),
+                      const SizedBox(height: 15),
+                      customTextField("Kata sandi", isPassword: true),
+                      const SizedBox(height: 25),
+
+                      // Tombol Register
                       ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
@@ -86,16 +126,30 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         child: const Text(
-                          "Masuk",
+                          "Buat Akun",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      const SizedBox(height: 30),
+
+                      // --- TEKS KEBIJAKAN PRIVASI (DIKEMBALIKAN) ---
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Dengan mendaftar akun, Anda menyetujui Kebijakan Privasi dan Ketentuan Layanan.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
+                      ),
+
+                      // ---------------------------------------------
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            "Belum punya akun? ",
+                            "Punya akun? ",
                             style: TextStyle(fontSize: 13),
                           ),
                           GestureDetector(
@@ -103,16 +157,15 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const RegisterPage(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
                             child: const Text(
-                              "Daftar",
+                              "Masuk disini",
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color.fromARGB(255, 29, 88, 11),
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -132,7 +185,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget customTextField(String hint, {bool isPassword = false}) {
     return TextField(
-      // Mengatur apakah teks disembunyikan berdasarkan status _isObscure
       obscureText: isPassword ? _isObscure : false,
       decoration: InputDecoration(
         hintText: hint,
@@ -143,10 +195,9 @@ class _LoginPageState extends State<LoginPage> {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        // Menambahkan ikon mata jika isPassword adalah true
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
@@ -154,10 +205,11 @@ class _LoginPageState extends State<LoginPage> {
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
                   color: Colors.grey,
+                  size: 20,
                 ),
                 onPressed: () {
                   setState(() {
-                    _isObscure = !_isObscure; // Toggle status
+                    _isObscure = !_isObscure;
                   });
                 },
               )

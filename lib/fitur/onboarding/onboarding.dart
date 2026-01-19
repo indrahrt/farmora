@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../login/pages/login.dart';
+import '../daftar/pages/daftar.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -59,6 +59,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
 
+            // --- TAMBAHKAN INDIKATOR DI SINI ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _onboardingData.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.only(right: 8),
+                  height: 8,
+                  width: _currentPage == index ? 24 : 8, // Memanjang jika aktif
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(
+                      alpha: _currentPage == index ? 1.0 : 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ),
+            ),
+
+            // ----------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 50),
               child: Row(
@@ -79,7 +100,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-
                             overlayColor:
                                 WidgetStateProperty.resolveWith<Color?>((
                                   states,
@@ -99,7 +119,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: const Text('Sebelumnya'),
                         )
                       : const SizedBox.shrink(),
-
                   ElevatedButton(
                     style: ButtonStyle(
                       backgroundColor: WidgetStateProperty.all(Colors.white),
@@ -110,7 +129,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-
                       overlayColor: WidgetStateProperty.resolveWith<Color?>((
                         states,
                       ) {
@@ -124,7 +142,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       if (_currentPage == _onboardingData.length - 1) {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterPage(),
+                          ),
                         );
                       } else {
                         _pageController.nextPage(
@@ -173,7 +193,6 @@ class OnboardingContent extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
             ),
-
             Positioned(
               top: constraints.maxHeight * 0.25,
               right: 20,
