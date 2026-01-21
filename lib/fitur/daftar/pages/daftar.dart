@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../login/pages/login.dart';
+import '../../beranda/pages/beranda.dart';
+import '../controller/daftar_controller.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,7 +13,23 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   DateTime? lastPressed;
-  bool _isObscure = true; // Status show/hide password
+
+  bool _isObscure = true;
+  bool _isLoadingEmail = false;
+
+  late final DaftarController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = DaftarController();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,172 +37,173 @@ class _RegisterPageState extends State<RegisterPage> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+
         final now = DateTime.now();
         if (lastPressed == null ||
             now.difference(lastPressed!) > const Duration(seconds: 2)) {
           lastPressed = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tekan sekali lagi untuk keluar'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          _showSnackBar('Tekan sekali lagi untuk keluar');
         } else {
           SystemNavigator.pop();
         }
       },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/background.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            Center(
-              child: SingleChildScrollView(
-                child: Container(
-                  width: 350,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 30,
-                    horizontal: 25,
-                  ),
-                  margin: const EdgeInsets.symmetric(vertical: 40),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Daftar",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 30),
+      child: Scaffold(body: Stack(children: [_background(), _registerCard()])),
+    );
+  }
 
-                      // Tombol Google
-                      OutlinedButton.icon(
-                        onPressed: () {},
-                        icon: Image.asset(
-                          'assets/images/google.png',
-                          height: 24,
-                        ),
-                        label: const Text(
-                          "Masuk dengan Google",
-                          style: TextStyle(color: Colors.black54),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: const StadiumBorder(),
-                          side: const BorderSide(color: Color(0xFFEEEEEE)),
-                        ),
-                      ),
-
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 15),
-                        child: Text(
-                          "atau",
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-
-                      customTextField("Nama lengkap"),
-                      const SizedBox(height: 15),
-                      customTextField("Email"),
-                      const SizedBox(height: 15),
-                      customTextField("Kata sandi", isPassword: true),
-                      const SizedBox(height: 25),
-
-                      // Tombol Register
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(
-                            255,
-                            29,
-                            88,
-                            11,
-                          ),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(double.infinity, 55),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text(
-                          "Buat Akun",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-
-                      // --- TEKS KEBIJAKAN PRIVASI (DIKEMBALIKAN) ---
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Dengan mendaftar akun, Anda menyetujui Kebijakan Privasi dan Ketentuan Layanan.",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
-                          height: 1.5,
-                        ),
-                      ),
-
-                      // ---------------------------------------------
-                      const SizedBox(height: 20),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Punya akun? ",
-                            style: TextStyle(fontSize: 13),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Masuk disini",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+  /// ===============================
+  /// BACKGROUND
+  /// ===============================
+  Widget _background() {
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/background.png'),
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  Widget customTextField(String hint, {bool isPassword = false}) {
+  /// ===============================
+  /// REGISTER CARD
+  /// ===============================
+  Widget _registerCard() {
+    return Center(
+      child: SingleChildScrollView(
+        child: Container(
+          width: 350,
+          padding: const EdgeInsets.symmetric(vertical: 35, horizontal: 25),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Daftar",
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 30),
+
+              /// GOOGLE REGISTER (TANPA LOADING)
+              OutlinedButton.icon(
+                onPressed: _registerGoogle,
+                icon: Image.asset('assets/images/google.png', height: 22),
+                label: const Text(
+                  "Daftar dengan Google",
+                  style: TextStyle(color: Colors.black54),
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: const StadiumBorder(),
+                  side: const BorderSide(color: Color(0xFFEEEEEE)),
+                ),
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 15),
+                child: Text("atau", style: TextStyle(color: Colors.grey)),
+              ),
+
+              _textField(
+                hint: "Nama lengkap",
+                controller: controller.nameController,
+              ),
+              const SizedBox(height: 15),
+
+              _textField(hint: "Email", controller: controller.emailController),
+              const SizedBox(height: 15),
+
+              _textField(
+                hint: "Kata sandi",
+                isPassword: true,
+                controller: controller.passwordController,
+              ),
+              const SizedBox(height: 25),
+
+              /// REGISTER EMAIL (PAKAI LOADING)
+              ElevatedButton(
+                onPressed: _isLoadingEmail ? null : _registerEmail,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 29, 88, 11),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 55),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: _isLoadingEmail
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        "Buat Akun",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+              ),
+
+              const SizedBox(height: 20),
+              const Text(
+                "Dengan mendaftar akun, Anda menyetujui\nKebijakan Privasi dan Ketentuan Layanan.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+
+              const SizedBox(height: 20),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Punya akun? "),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginPage()),
+                      );
+                    },
+                    child: const Text(
+                      "Masuk di sini",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        decoration: TextDecoration.underline,
+                        color: Color.fromARGB(255, 29, 88, 11),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ===============================
+  /// TEXT FIELD
+  /// ===============================
+  Widget _textField({
+    required String hint,
+    bool isPassword = false,
+    TextEditingController? controller,
+  }) {
     return TextField(
+      controller: controller,
       obscureText: isPassword ? _isObscure : false,
       decoration: InputDecoration(
         hintText: hint,
@@ -195,7 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
         ),
         suffixIcon: isPassword
@@ -204,17 +223,61 @@ class _RegisterPageState extends State<RegisterPage> {
                   _isObscure
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: Colors.grey,
-                  size: 20,
                 ),
                 onPressed: () {
-                  setState(() {
-                    _isObscure = !_isObscure;
-                  });
+                  setState(() => _isObscure = !_isObscure);
                 },
               )
             : null,
       ),
     );
+  }
+
+  /// ===============================
+  /// REGISTER EMAIL
+  /// ===============================
+  Future<void> _registerEmail() async {
+    setState(() => _isLoadingEmail = true);
+
+    final error = await controller.register();
+
+    if (!mounted) return;
+
+    setState(() => _isLoadingEmail = false);
+
+    if (error == null) {
+      _showSnackBar('Registrasi berhasil');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+    } else {
+      _showSnackBar(error);
+    }
+  }
+
+  /// ===============================
+  /// REGISTER GOOGLE (LANGSUNG BERANDA)
+  /// ===============================
+  Future<void> _registerGoogle() async {
+    final error = await controller.registerWithGoogle();
+
+    if (!mounted) return;
+
+    if (error == null) {
+      _showSnackBar('Berhasil masuk dengan Google');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const BerandaPage()),
+      );
+    } else {
+      _showSnackBar(error);
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
