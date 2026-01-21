@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "1015379236673",
+    "project_id": "farmora-754c7",
+    "storage_bucket": "farmora-754c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1015379236673:android:031558394dae7cf845b3c0",
+        "android_client_info": {
+          "package_name": "com.example.farmora"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1015379236673-4rjmdhfm76eaip3evjekiaj1knkr0c5e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBoW5ZPoyBAQt0VOpCEtlcOgEoFSb-1QAs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1015379236673-4rjmdhfm76eaip3evjekiaj1knkr0c5e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1015379236673-g1nkhjpvj394jaghaag5hodnlga9jpbm.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.farmora"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
