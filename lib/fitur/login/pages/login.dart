@@ -22,6 +22,13 @@ class _LoginPageState extends State<LoginPage> {
   static const primaryColor = Color.fromARGB(255, 29, 88, 11);
 
   @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
@@ -32,9 +39,7 @@ class _LoginPageState extends State<LoginPage> {
         if (lastPressed == null ||
             now.difference(lastPressed!) > const Duration(seconds: 2)) {
           lastPressed = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tekan sekali lagi untuk keluar')),
-          );
+          _showMessage('Tekan sekali lagi untuk keluar');
         } else {
           SystemNavigator.pop();
         }
@@ -101,13 +106,13 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 25),
 
-            /// BUTTON MASUK (TEXT PUTIH)
+            /// BUTTON MASUK
             ElevatedButton(
               onPressed: _loginEmail,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 55),
                 backgroundColor: primaryColor,
-                foregroundColor: Colors.white, // 🔥 FIX DI SINI
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -120,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
 
             const SizedBox(height: 20),
 
-            /// TEKS DAFTAR (WARNA HIJAU)
+            /// DAFTAR
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -137,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
-                      color: primaryColor, // 🔥 FIX DI SINI
+                      color: primaryColor,
                     ),
                   ),
                 ),
@@ -189,14 +194,30 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// ===============================
-  /// LOGIN EMAIL
+  /// LOGIN EMAIL (VALIDASI LENGKAP)
   /// ===============================
   Future<void> _loginEmail() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    // VALIDASI INPUT
+    if (email.isEmpty && password.isEmpty) {
+      _showMessage('Email dan kata sandi wajib diisi');
+      return;
+    }
+
+    if (email.isEmpty) {
+      _showMessage('Email wajib diisi');
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showMessage('Kata sandi wajib diisi');
+      return;
+    }
+
     try {
-      await authService.loginWithEmail(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      await authService.loginWithEmail(email: email, password: password);
 
       if (!mounted) return;
 
@@ -205,9 +226,16 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const BerandaPage()),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      _showMessage('Email atau kata sandi salah');
     }
+  }
+
+  /// ===============================
+  /// SNACKBAR HELPER
+  /// ===============================
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }
