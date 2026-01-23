@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan ini
 import '../onboarding/onboarding.dart';
 import '../daftar/pages/daftar.dart';
+import '../menu_aplikasi/main_navigation.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,24 +49,41 @@ class _SplashScreenState extends State<SplashScreen>
 
   Future<void> _checkFirstOpen() async {
     final prefs = await SharedPreferences.getInstance();
+    // Cek apakah ini pertama kali aplikasi diinstal/buka
     _isFirstOpen = prefs.getBool('is_first_open') ?? true;
 
     if (_isFirstOpen) {
       await prefs.setBool('is_first_open', false);
     }
 
+    // Delay 3 detik untuk animasi splash sebelum pindah halaman
     Future.delayed(const Duration(seconds: 3), _navigate);
   }
 
   void _navigate() {
     if (!mounted) return;
 
+    // LOGIKA NAVIGASI BARU:
+    // 1. Jika baru pertama kali buka aplikasi -> Onboarding
     if (_isFirstOpen) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const OnboardingPage()),
       );
+      return;
+    }
+
+    // 2. Cek status Login Firebase
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Jika user sudah login, langsung ke Menu Utama (Global)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MenuNavigation()),
+      );
     } else {
+      // Jika belum login, ke halaman Daftar
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const RegisterPage()),

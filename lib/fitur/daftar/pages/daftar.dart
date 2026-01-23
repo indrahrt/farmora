@@ -1,7 +1,8 @@
+import 'package:farmora/fitur/menu_aplikasi/main_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../login/pages/login.dart';
-import '../../beranda/pages/beranda.dart';
+
 import '../controller/daftar_controller.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -266,9 +267,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (error == null) {
       _showSnackBar('Berhasil masuk dengan Google');
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const BerandaPage()),
+        MaterialPageRoute(builder: (_) => const MenuNavigation()),
+        (route) => false,
       );
     } else {
       _showSnackBar(error);

@@ -1,7 +1,7 @@
+import 'package:farmora/fitur/menu_aplikasi/main_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../daftar/pages/daftar.dart';
-import '../../beranda/pages/beranda.dart';
 import '../../../services/firebase_auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -55,9 +55,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// ===============================
-  /// BACKGROUND
-  /// ===============================
   Widget _background() {
     return Container(
       decoration: const BoxDecoration(
@@ -69,9 +66,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// ===============================
-  /// LOGIN CARD
-  /// ===============================
   Widget _loginCard() {
     return SingleChildScrollView(
       child: Container(
@@ -106,7 +100,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 25),
 
-            /// BUTTON MASUK
             ElevatedButton(
               onPressed: _loginEmail,
               style: ElevatedButton.styleFrom(
@@ -125,7 +118,6 @@ class _LoginPageState extends State<LoginPage> {
 
             const SizedBox(height: 20),
 
-            /// DAFTAR
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -154,9 +146,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  /// ===============================
-  /// TEXT FIELD
-  /// ===============================
   Widget _textField(
     String hint, {
     bool isPassword = false,
@@ -194,23 +183,20 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// ===============================
-  /// LOGIN EMAIL (VALIDASI LENGKAP)
+  /// LOGIN EMAIL (FIX ERROR MESSAGE)
   /// ===============================
   Future<void> _loginEmail() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
-    // VALIDASI INPUT
     if (email.isEmpty && password.isEmpty) {
       _showMessage('Email dan kata sandi wajib diisi');
       return;
     }
-
     if (email.isEmpty) {
       _showMessage('Email wajib diisi');
       return;
     }
-
     if (password.isEmpty) {
       _showMessage('Kata sandi wajib diisi');
       return;
@@ -221,18 +207,18 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const BerandaPage()),
+        MaterialPageRoute(builder: (_) => const MenuNavigation()),
+        (route) =>
+            false, // User tidak bisa balik ke halaman login setelah masuk
       );
     } catch (e) {
-      _showMessage('Email atau kata sandi salah');
+      /// 🔥 INI KUNCI PERBAIKANNYA
+      _showMessage(e.toString());
     }
   }
 
-  /// ===============================
-  /// SNACKBAR HELPER
-  /// ===============================
   void _showMessage(String message) {
     ScaffoldMessenger.of(
       context,
