@@ -30,6 +30,7 @@ class FirebaseAuthService {
 
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await _auth.currentUser?.reload();
     } on FirebaseAuthException catch (e) {
       throw _translateError(e);
     } on PlatformException {
@@ -56,6 +57,8 @@ class FirebaseAuthService {
         email: email,
         password: password,
       );
+      await result.user?.updateDisplayName(name);
+      await result.user?.reload();
 
       await _firestore.collection('users').doc(result.user!.uid).set({
         'uid': result.user!.uid,
@@ -140,7 +143,7 @@ class FirebaseAuthService {
       case 'invalid-email':
         return 'Format email tidak valid.';
       case 'weak-password':
-        return 'Kata sandi terlalu lemah (minimal 6 karakter).';
+        return 'Kata sandi terlalu lemah minimal 6 karakter';
       case 'user-not-found':
         return 'Akun tidak ditemukan.';
       case 'wrong-password':
