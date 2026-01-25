@@ -12,6 +12,19 @@ class FirebaseAuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   /// ===============================
+  /// TAMBAHAN
+  /// PAKSA PILIH AKUN GOOGLE SETIAP KLIK
+  /// ===============================
+  Future<void> _forceChooseGoogleAccount() async {
+    try {
+      await _googleSignIn.signOut();
+      await _googleSignIn.disconnect();
+    } catch (_) {
+      // Aman diabaikan jika belum pernah login
+    }
+  }
+
+  /// ===============================
   /// LOGIN EMAIL
   /// ===============================
   Future<void> loginWithEmail({
@@ -35,8 +48,11 @@ class FirebaseAuthService {
       throw _translateError(e);
     } on PlatformException {
       throw 'Tidak ada koneksi internet. Silakan periksa jaringan Anda.';
-    } catch (_) {
-      throw 'Terjadi kesalahan. Silakan coba lagi.';
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        throw _translateError(e);
+      }
+      rethrow;
     }
   }
 
@@ -81,6 +97,9 @@ class FirebaseAuthService {
   /// ===============================
   Future<void> signInWithGoogle() async {
     try {
+      // 🔑 TAMBAHAN (TANPA MENGUBAH LOGIC ASLI)
+      await _forceChooseGoogleAccount();
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       // User batal login
@@ -108,7 +127,7 @@ class FirebaseAuthService {
         });
       }
     }
-    // 🔴 ERROR GOOGLE / ANDROID (TANPA INTERNET)
+    // 🔴 ERROR GOOGLE / ANDROID
     on PlatformException catch (e) {
       if (e.code == 'network_error') {
         throw 'Tidak ada koneksi internet. Silakan periksa jaringan Anda.';
@@ -147,6 +166,8 @@ class FirebaseAuthService {
       case 'user-not-found':
         return 'Akun tidak ditemukan.';
       case 'wrong-password':
+        return 'Email atau kata sandi salah.';
+      case 'invalid-credential':
         return 'Email atau kata sandi salah.';
       case 'user-disabled':
         return 'Akun telah dinonaktifkan.';

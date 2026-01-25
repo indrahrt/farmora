@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1015379236673-o8ngcfbmrm4fudus8jcea6b35ud3sivt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.farmora",
+            "certificate_hash": "1f5eabdf50b74d07dc0eb268c3dd55d0c1f0a36c"
+          }
+        },
+        {
           "client_id": "1015379236673-4rjmdhfm76eaip3evjekiaj1knkr0c5e.apps.googleusercontent.com",
           "client_type": 3
         }
