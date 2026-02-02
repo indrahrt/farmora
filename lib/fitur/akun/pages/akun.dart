@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; 
-import '../../login/pages/login.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../widgets/settings.dart';
+import 'edit_produk_page.dart'; // Pastikan import ke halaman edit
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -11,111 +13,115 @@ class ProfilPage extends StatefulWidget {
 }
 
 class _ProfilPageState extends State<ProfilPage> {
-  final Color primaryColor = const Color.fromARGB(255, 29, 88, 11);
-
-  // Getter untuk mendapatkan data user terbaru dari Firebase Auth
+  final Color primaryColor = const Color(0xFF1D580B);
   User? get user => FirebaseAuth.instance.currentUser;
 
-  // ✅ TAMBAHAN: nama dari Firestore (fallback)
   String? firestoreName;
+  String? firestorePhotoBase64;
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    _refreshUser();
-    _loadNameFromFirestore(); // ✅ TAMBAHAN
+    _initProfile();
   }
 
-  /// Fungsi untuk menarik data terbaru dari server Firebase
-  Future<void> _refreshUser() async {
-    try {
-      await user?.reload();
-      if (mounted) {
-        setState(() {});
-      }
-    } catch (e) {
-      debugPrint("Gagal memperbarui profil: $e");
-    }
-  }
-
-  /// ✅ TAMBAHAN: Ambil nama dari Firestore (register manual)
-  Future<void> _loadNameFromFirestore() async {
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
-
+  Future<void> _initProfile() async {
+    final uid = user?.uid;
+    if (uid != null) {
       final doc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(currentUser.uid)
+          .doc(uid)
           .get();
-
       if (doc.exists && mounted) {
         setState(() {
-          firestoreName = doc['name'];
+          firestoreName = doc.data()?['name'];
+          firestorePhotoBase64 = doc.data()?['photoBase64'];
         });
       }
-    } catch (e) {
-      debugPrint("Gagal mengambil nama Firestore: $e");
+    }
+    if (mounted) {
+      setState(() => loading = false);
     }
   }
 
-  void _showSettingsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.storefront, color: primaryColor),
-              title: const Text("Menjual (Input Produk)"),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: Icon(Icons.location_on_outlined, color: primaryColor),
-              title: const Text("Alamat Saya"),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: Icon(
-                Icons.account_balance_wallet_outlined,
-                color: primaryColor,
-              ),
-              title: const Text("Saldo"),
-              onTap: () => Navigator.pop(context),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text("Keluar", style: TextStyle(color: Colors.red)),
-              onTap: () async {
-                await FirebaseAuth.instance.signOut();
-
-                if (!context.mounted) return;
-
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                  (route) => false,
-                );
-              },
-            ),
-            const SizedBox(height: 20),
-          ],
+  Widget _buildProductCard(Map<String, dynamic> data, String docId) {
+    final imageBase64 = data['imageBase64'];
+    return InkWell(
+      onTap: () {
+        // Klik kartu langsung ke halaman edit
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                EditProdukPage(docId: docId, initialData: data),
+          ),
         );
       },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8F9F8),
+                    image: imageBase64 != null
+                        ? DecorationImage(
+                            image: MemoryImage(base64Decode(imageBase64)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child: imageBase64 == null
+                      ? const Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                        )
+                      : null,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data['name'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "Rp ${data['price']}",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -125,134 +131,98 @@ class _ProfilPageState extends State<ProfilPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black54),
-            onPressed: () => _showSettingsMenu(context),
+            onPressed: () => SettingsBottomSheet.show(context, primaryColor),
+            icon: const Icon(Icons.settings_outlined, color: Colors.black),
           ),
+          const SizedBox(width: 10),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _refreshUser();
-          await _loadNameFromFirestore(); // ✅ refresh Firestore juga
-        },
-        color: primaryColor,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              // Header Profil
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 45,
-                      backgroundColor: primaryColor.withValues(alpha: 0.1),
-                      backgroundImage: user?.photoURL != null
-                          ? NetworkImage(user!.photoURL!)
-                          : null,
-                      child: user?.photoURL == null
-                          ? Icon(Icons.person, size: 45, color: primaryColor)
-                          : null,
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            // ✅ fallback berlapis (Google → Firestore → default)
-                            user?.displayName ??
-                                firestoreName ??
-                                "Pengguna Farmora",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            user?.email ?? "-",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 40),
-              const Text(
-                "Toko Saya",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-
-              // Grid Produk
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 25),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: 4,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 0.8,
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey[200],
+                    backgroundImage: firestorePhotoBase64 != null
+                        ? MemoryImage(base64Decode(firestorePhotoBase64!))
+                        : null,
+                    child: firestorePhotoBase64 == null
+                        ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                        : null,
                   ),
-                  itemBuilder: (context, index) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                  const SizedBox(height: 15),
+                  Text(
+                    firestoreName ?? "Pengguna Farmora",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 25),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Produk Toko Saya",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.image, size: 40, color: Colors.grey[300]),
-                          const SizedBox(height: 10),
-                          Container(
-                            height: 8,
-                            width: 60,
-                            color: Colors.grey[100],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('products')
+                        .where('ownerId', isEqualTo: user?.uid)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 50),
+                            child: Text("Belum ada produk."),
                           ),
-                          const SizedBox(height: 5),
-                          Container(
-                            height: 8,
-                            width: 40,
-                            color: Colors.green[50],
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        );
+                      }
+                      final docs = snapshot.data!.docs;
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 15,
+                              mainAxisSpacing: 15,
+                              childAspectRatio: 0.8,
+                            ),
+                        itemCount: docs.length,
+                        itemBuilder: (context, i) => _buildProductCard(
+                          docs[i].data() as Map<String, dynamic>,
+                          docs[i].id,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 100),
+                ],
               ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
