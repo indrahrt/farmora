@@ -116,7 +116,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
 
               _textField(
-                hint: "Nama Toko",
+                hint: "Nama Pengguna",
                 controller: controller.nameController,
               ),
               const SizedBox(height: 15),
