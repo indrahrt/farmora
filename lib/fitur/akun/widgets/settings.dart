@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../login/pages/login.dart';
 import '../pages/akun_saya.dart';
 import '../pages/menjual.dart';
+import '../../beranda/controller/cart_controller.dart';
 
 class SettingsBottomSheet {
   static void show(BuildContext context, Color primaryColor) {
@@ -89,6 +90,10 @@ class SettingsBottomSheet {
                 ),
                 child: Divider(color: Colors.grey[100], thickness: 1),
               ),
+
+              /// ===============================
+              /// LOGOUT + CLEAR CART
+              /// ===============================
               ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 25),
                 leading: Container(
@@ -112,8 +117,12 @@ class SettingsBottomSheet {
                   ),
                 ),
                 onTap: () async {
+                  // ✅ TAMBAHAN UTAMA
+                  CartController.instance.clearCart();
+
                   await FirebaseAuth.instance.signOut();
                   if (!context.mounted) return;
+
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -140,7 +149,6 @@ class SettingsBottomSheet {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          // PERBAIKAN: Menggunakan withValues menggantikan withOpacity
           color: color.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
