@@ -266,10 +266,7 @@ class _MenjualPageState extends State<MenjualPage> {
               TextFormField(
                 controller: descController,
                 maxLines: 4,
-                decoration: _inputStyle(
-                  'Deskripsi Produk',
-                  Icons.description_outlined,
-                ),
+                decoration: _inputStyle('Deskripsi Produk', Icons.notes),
                 validator: (v) => v!.isEmpty ? 'Deskripsi wajib diisi' : null,
               ),
 

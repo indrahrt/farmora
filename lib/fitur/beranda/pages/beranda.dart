@@ -1,28 +1,48 @@
 import 'package:flutter/material.dart';
+import '../widgets/product_section.dart';
+import 'kategori_page.dart';
+import 'artikel.dart';
 
 void main() {
-  runApp(const Beranda());
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: Beranda()));
 }
 
-class Beranda extends StatelessWidget {
+class Beranda extends StatefulWidget {
   const Beranda({super.key});
 
   @override
+  State<Beranda> createState() => _BerandaState();
+}
+
+class _BerandaState extends State<Beranda> {
+  final Color primaryColor = const Color(0xFF1D580B);
+
+  /// ✅ CONTROLLER SEARCH
+  final TextEditingController searchController = TextEditingController();
+
+  String keyword = "";
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.grey[100],
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async =>
+              await Future.delayed(const Duration(seconds: 1)),
+          color: primaryColor,
           child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
-                _buildCategories(),
-                _buildStoreSection(),
-                _buildBestSellerHeader(),
-                _buildProductGrid(),
+                _buildHeaderWithCart(),
+                _buildCategories(context),
+
+                /// 🔥 PRODUK TERBARU + SEARCH FILTER
+                ProdukTerbaruSection(searchKeyword: keyword),
+
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -31,222 +51,146 @@ class Beranda extends StatelessWidget {
     );
   }
 
-  // 1. Search Bar Section
-  Widget _buildHeader() {
+  // ================= HEADER =================
+
+  Widget _buildHeaderWithCart() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.black, width: 2),
-        ),
-        child: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Cari Toko Terdekat',
-            icon: Icon(Icons.search, color: Colors.black),
-            suffixIcon: Icon(Icons.mic, color: Colors.black),
-            border: InputBorder.none,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 2. Category Icons
-  Widget _buildCategories() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 25, 20, 10),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _categoryItem(Icons.shopping_basket, 'Belanja'),
-          _categoryItem(Icons.percent, 'Promo'),
-          _categoryItem(Icons.handyman, 'Alat Tani'),
-          _categoryItem(Icons.article, 'Artikel'),
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryItem(IconData icon, String label) {
-    return Column(
-      children: [
-        CircleAvatar(
-          backgroundColor: Colors.green[100],
-          child: Icon(icon, color: Colors.green),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10)),
-      ],
-    );
-  }
-
-  // 3. Store Banner Section (Horizontal Scroll)
-  Widget _buildStoreSection() {
-    return Column(
-      children: [
-        const ListTile(
-          leading: Icon(Icons.verified, color: Colors.green),
-          title: Text(
-            'Toko Terjamin Farmora',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            'Toko pilihan dengan kualitas terpercaya',
-            style: TextStyle(fontSize: 12),
-          ),
-        ),
-        SizedBox(
-          height: 100,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            children: [
-              _storeCard('Toko Tani Makmur', '4.8', 'Lembang'),
-              _storeCard('Toko Tani Sejahtera', '4.7', 'Subang'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _storeCard(String name, String rating, String loc) {
-    return Container(
-      width: 250,
-      margin: const EdgeInsets.only(right: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: ListTile(
-        leading: const CircleAvatar(backgroundColor: Colors.orange),
-        title: Text(
-          name,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          '⭐ $rating | $loc',
-          style: const TextStyle(fontSize: 11),
-        ),
-        trailing: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.lightGreen[200],
-            elevation: 0,
-          ),
-          child: const Text(
-            'Lihat',
-            style: TextStyle(color: Colors.black, fontSize: 10),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 4. Best Seller Header
-  Widget _buildBestSellerHeader() {
-    return const Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          Icon(Icons.local_fire_department, color: Colors.orange),
-          SizedBox(width: 8),
-          Text(
-            'Best Seller',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 5. Product Grid
-  Widget _buildProductGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.65,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-      ),
-      itemCount: 6,
-      itemBuilder: (context, index) {
-        return _productCard('Bawang Merah', 'Rp 14.000/Kg');
-      },
-    );
-  }
-
-  Widget _productCard(String title, String price) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Column(
         children: [
           Expanded(
             child: Container(
-              color: Colors.grey[300],
-              child: const Center(child: Icon(Icons.image)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: searchController,
+
+                /// 🔥 SEARCH REALTIME
+                onChanged: (value) {
+                  setState(() {
+                    keyword = value.toLowerCase();
+                  });
+                },
+
+                decoration: const InputDecoration(
+                  hintText: 'Cari pupuk, alat, atau toko...',
+                  hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
+                  prefixIcon: Icon(Icons.search, color: Colors.green),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 15),
+                ),
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(4.0),
-            child: Column(
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  price,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Text(
-                  '⭐ 4.8 | 1.2K Terjual',
-                  style: TextStyle(fontSize: 8),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightGreen[200],
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 25),
-                    ),
-                    child: const Text(
-                      'Tambah',
-                      style: TextStyle(fontSize: 9, color: Colors.black),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(width: 12),
+          _iconButton(Icons.shopping_cart_outlined),
+        ],
+      ),
+    );
+  }
+
+  Widget _iconButton(IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
           ),
         ],
+      ),
+      child: Icon(icon, size: 24, color: Colors.black87),
+    );
+  }
+
+  // ================= KATEGORI =================
+
+  Widget _buildCategories(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _categoryItem(
+            context,
+            Icons.apple_rounded,
+            'Buah',
+            'Buah',
+            Colors.redAccent,
+          ),
+          _categoryItem(
+            context,
+            Icons.eco_rounded,
+            'Sayur',
+            'Sayur',
+            Colors.green,
+          ),
+          _categoryItem(
+            context,
+            Icons.article_rounded,
+            'Artikel',
+            'artikel',
+            Colors.blueAccent,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _categoryItem(
+    BuildContext context,
+    IconData icon,
+    String label,
+    String kategori,
+    Color color,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) {
+              if (kategori == 'artikel') {
+                return const ArtikelPage();
+              }
+              return KategoriPage(kategori: kategori);
+            },
+          ),
+        );
+      },
+      child: Container(
+        width: 105,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color.withValues(alpha: 0.8),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

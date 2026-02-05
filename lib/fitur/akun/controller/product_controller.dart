@@ -44,4 +44,45 @@ class ProductController {
         .orderBy('createdAt', descending: true)
         .snapshots();
   }
+
+  /// ================= SELLER CACHE (ANTI LAG) =================
+
+  Map<String, Map<String, dynamic>> sellerCache = {};
+
+  Future<Map<String, dynamic>?> getSellerCached(String ownerId) async {
+    /// cek cache dulu
+    if (sellerCache.containsKey(ownerId)) {
+      return sellerCache[ownerId];
+    }
+
+    try {
+      final doc = await _firestore.collection('users').doc(ownerId).get();
+
+      /// USER ADA
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+
+        sellerCache[ownerId] = data;
+
+        return data;
+      }
+    } catch (_) {}
+
+    /// fallback current user
+    final userRecord = _auth.currentUser;
+
+    if (userRecord != null && userRecord.uid == ownerId) {
+      final fallback = {
+        'name': userRecord.displayName ?? 'User',
+        'photoBase64': null,
+      };
+
+      sellerCache[ownerId] = fallback;
+
+      return fallback;
+    }
+
+    /// default
+    return null;
+  }
 }

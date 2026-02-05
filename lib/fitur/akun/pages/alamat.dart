@@ -8,50 +8,111 @@ class AlamatPage extends StatelessWidget {
 
   final AlamatController _controller = AlamatController();
 
-  // WARNA: Hijau Botol
+  // WARNA: Hijau Botol (Farmora Theme)
   final Color primaryColor = const Color.fromARGB(255, 29, 88, 11);
 
-  // FUNGSI BARU: Dialog Konfirmasi Hapus
+  // FUNGSI: Dialog Konfirmasi Hapus
   Future<void> _konfirmasiHapus(
     BuildContext context,
     AlamatModel alamat,
   ) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Alamat'),
-        content: Text(
-          'Apakah Anda yakin ingin menghapus alamat "${alamat.nama}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Batal', style: TextStyle(color: Colors.grey[600])),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.delete_sweep_rounded,
+                  color: Colors.redAccent,
+                  size: 40,
+                ),
               ),
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus'),
+              const SizedBox(height: 20),
+              const Text(
+                'Hapus Alamat?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Apakah Anda yakin ingin menghapus alamat atas nama ${alamat.nama}?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: Text(
+                        'Batal',
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Ya, Hapus',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
 
-    // Jika user menekan tombol Hapus
     if (confirmed == true) {
       await _controller.hapusAlamat(alamat.id);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Alamat berhasil dihapus')),
+          SnackBar(
+            content: const Text('Alamat berhasil dihapus'),
+            backgroundColor: Colors.black87,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
         );
       }
     }
@@ -146,7 +207,8 @@ class AlamatPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(13),
+                              // PERBAIKAN: Menggunakan withValues sebagai pengganti withOpacity
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -172,7 +234,8 @@ class AlamatPage extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: primaryColor.withAlpha(26),
+                                      // PERBAIKAN: Menggunakan withValues sebagai pengganti withOpacity
+                                      color: primaryColor.withValues(alpha: 0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -184,8 +247,7 @@ class AlamatPage extends StatelessWidget {
                                   const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           alamat.nama,
@@ -218,7 +280,7 @@ class AlamatPage extends StatelessWidget {
                                     onPressed: () => _konfirmasiHapus(
                                       context,
                                       alamat,
-                                    ), // PERBAIKAN DI SINI
+                                    ),
                                   ),
                                 ],
                               ),
