@@ -142,85 +142,98 @@ class _ProfilPageState extends State<ProfilPage> {
       ),
       body: loading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: firestorePhotoBase64 != null
-                        ? MemoryImage(base64Decode(firestorePhotoBase64!))
-                        : null,
-                    child: firestorePhotoBase64 == null
-                        ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                        : null,
-                  ),
-                  const SizedBox(height: 15),
-                  Text(
-                    firestoreName ?? "Pengguna Farmora",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
+          : RefreshIndicator(
+              color: primaryColor,
+              onRefresh: _initProfile, // Memanggil ulang fungsi initProfile
+              child: SingleChildScrollView(
+                // Physics ini memastikan fitur tarik-ke-bawah selalu aktif
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: firestorePhotoBase64 != null
+                          ? MemoryImage(base64Decode(firestorePhotoBase64!))
+                          : null,
+                      child: firestorePhotoBase64 == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 50,
+                              color: Colors.grey,
+                            )
+                          : null,
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 25),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Produk Toko Saya",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 15),
+                    Text(
+                      firestoreName ?? "Pengguna Farmora",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Produk Toko Saya",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('products')
-                        .where('ownerId', isEqualTo: user?.uid)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(top: 50),
-                            child: Text("Belum ada produk."),
+                    const SizedBox(height: 20),
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('products')
+                          .where('ownerId', isEqualTo: user?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 50),
+                              child: Text("Belum ada produk."),
+                            ),
+                          );
+                        }
+                        final docs = snapshot.data!.docs;
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 15,
+                                mainAxisSpacing: 15,
+                                childAspectRatio: 0.8,
+                              ),
+                          itemCount: docs.length,
+                          itemBuilder: (context, i) => _buildProductCard(
+                            docs[i].data() as Map<String, dynamic>,
+                            docs[i].id,
                           ),
                         );
-                      }
-                      final docs = snapshot.data!.docs;
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 15,
-                              mainAxisSpacing: 15,
-                              childAspectRatio: 0.8,
-                            ),
-                        itemCount: docs.length,
-                        itemBuilder: (context, i) => _buildProductCard(
-                          docs[i].data() as Map<String, dynamic>,
-                          docs[i].id,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 100),
-                ],
+                      },
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
               ),
             ),
     );

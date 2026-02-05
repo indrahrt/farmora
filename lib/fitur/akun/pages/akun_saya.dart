@@ -1,14 +1,11 @@
-
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
 import '../../daftar/pages/daftar.dart';
 
 class AkunPage extends StatefulWidget {
@@ -126,7 +123,6 @@ class _AkunPageState extends State<AkunPage> {
       await user.delete();
       if (isGoogleUser) await GoogleSignIn().signOut();
 
-      // CEK MOUNTED SEBELUM NAVIGASI (MENGHILANGKAN ERROR LINTER)
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -154,34 +150,111 @@ class _AkunPageState extends State<AkunPage> {
     }
   }
 
+  // KONFIRMASI HAPUS YANG DIUPGRADE
   void confirmDelete() {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Hapus Akun?',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
-        content: const Text(
-          'Tindakan ini tidak bisa dibatalkan. Semua data Anda akan dihapus permanen.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              deleteAccount();
-            },
-            child: const Text(
-              'Hapus Akun',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle Bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-        ],
+            // Warning Icon
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.warning_rounded,
+                color: Colors.red.shade400,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Hapus Akun Anda?",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Tindakan ini permanen. Semua data profil, riwayat, dan informasi Anda akan dihapus dari sistem kami selamanya.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 15,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Batal",
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      deleteAccount();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Hapus Akun",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -293,7 +366,7 @@ class _AkunPageState extends State<AkunPage> {
                         ),
                         const SizedBox(height: 25),
                         _buildStyledTextField(
-                          label: 'Nama Lengkap',
+                          label: 'Nama Pengguna',
                           controller: nameController,
                           icon: Icons.person_outline,
                         ),
