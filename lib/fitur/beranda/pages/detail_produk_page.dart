@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../akun/models/product_model.dart';
-import '../controller/cart_controller.dart'; // Import controller
+import '../controller/cart_controller.dart';
 
 class DetailProductPage extends StatelessWidget {
   final ProductModel product;
@@ -75,6 +75,7 @@ class DetailProductPage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     product.name,
+                    textAlign: TextAlign.start,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
@@ -94,6 +95,7 @@ class DetailProductPage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     product.description,
+                    textAlign: TextAlign.justify,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],
@@ -104,7 +106,10 @@ class DetailProductPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Divider(thickness: 0.5),
                   ),
-                  _buildReviewSection(context),
+
+                  // ✅ ULASAN (SUDAH SESUAI MAU KAMU)
+                  _buildReviewSection(),
+
                   const SizedBox(height: 120),
                 ],
               ),
@@ -112,7 +117,7 @@ class DetailProductPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomSheet: _buildBottomSheet(context), // Pass context ke sini
+      bottomSheet: _buildBottomSheet(context),
     );
   }
 
@@ -142,42 +147,28 @@ class DetailProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewSection(BuildContext context) {
+  /// ================= ULASAN (TANPA BUTTON) =================
+  Widget _buildReviewSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              "Ulasan Pembeli",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            TextButton.icon(
-              onPressed: () {},
-              icon: Icon(Icons.edit_note, size: 20, color: primaryColor),
-              label: Text(
-                "Berikan Ulasan",
-                style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+        const Text(
+          "Ulasan Pembeli",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 12),
-        const Row(
-          children: [
-            Icon(Icons.star_rounded, color: Colors.amber, size: 32),
-            SizedBox(width: 8),
-            Text(
-              "0.0",
-              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(width: 8),
-            Text("/ 5.0", style: TextStyle(color: Colors.grey, fontSize: 16)),
-          ],
+        const SizedBox(height: 20),
+
+        Center(
+          child: Column(
+            children: const [
+              Icon(Icons.rate_review_outlined, size: 48, color: Colors.grey),
+              SizedBox(height: 12),
+              Text(
+                "Belum ada ulasan",
+                style: TextStyle(color: Colors.grey, fontSize: 14),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -196,7 +187,7 @@ class DetailProductPage extends StatelessWidget {
     );
   }
 
-  // ================= REVISI BOTTOM SHEET: TAMBAH KE KERANJANG =================
+  // ================= KERANJANG (TIDAK DIUBAH) =================
 
   Widget _buildBottomSheet(BuildContext context) {
     return Container(
@@ -215,19 +206,28 @@ class DetailProductPage extends StatelessWidget {
         children: [
           _buildIconButton(Icons.chat_bubble_outline_rounded, () {}),
           const SizedBox(width: 12),
-
-          // TOMBOL KERANJANG FUNGSIONAL
           _buildIconButton(Icons.add_shopping_cart_rounded, () {
-            CartController.instance.addToCart(product);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("${product.name} ditambahkan ke keranjang"),
-                backgroundColor: primaryColor,
-                duration: const Duration(seconds: 1),
-              ),
-            );
-          }),
+            final cart = CartController.instance;
 
+            if (cart.isProductInCart(product)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("Produk sudah ada dalam keranjang"),
+                  backgroundColor: Colors.black87,
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            } else {
+              cart.addToCart(product);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Produk berhasil masuk ke keranjang"),
+                  backgroundColor: Colors.black87,
+                  duration: const Duration(seconds: 1),
+                ),
+              );
+            }
+          }),
           const SizedBox(width: 12),
           Expanded(
             child: SizedBox(

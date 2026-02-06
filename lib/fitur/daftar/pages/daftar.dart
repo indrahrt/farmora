@@ -2,8 +2,8 @@ import 'package:farmora/fitur/menu_aplikasi/main_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../login/pages/login.dart';
-
 import '../controller/daftar_controller.dart';
+import '../../beranda/controller/cart_controller.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -87,7 +87,6 @@ class _RegisterPageState extends State<RegisterPage> {
             ],
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
                 "Daftar",
@@ -95,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 30),
 
-              /// GOOGLE REGISTER (TANPA LOADING)
+              /// GOOGLE REGISTER
               OutlinedButton.icon(
                 onPressed: _registerGoogle,
                 icon: Image.asset('assets/images/google.png', height: 22),
@@ -131,7 +130,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 25),
 
-              /// REGISTER EMAIL (PAKAI LOADING)
+              /// REGISTER EMAIL
               ElevatedButton(
                 onPressed: _isLoadingEmail ? null : _registerEmail,
                 style: ElevatedButton.styleFrom(
@@ -155,13 +154,6 @@ class _RegisterPageState extends State<RegisterPage> {
                         "Buat Akun",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
-              ),
-
-              const SizedBox(height: 20),
-              const Text(
-                "Dengan mendaftar akun, Anda menyetujui\nKebijakan Privasi dan Ketentuan Layanan.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 11, color: Colors.grey),
               ),
 
               const SizedBox(height: 20),
@@ -235,7 +227,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   /// ===============================
-  /// REGISTER EMAIL
+  /// REGISTER EMAIL (🔥 FIX UTAMA)
   /// ===============================
   Future<void> _registerEmail() async {
     setState(() => _isLoadingEmail = true);
@@ -247,6 +239,9 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoadingEmail = false);
 
     if (error == null) {
+      // ✅ INI YANG SEBELUMNYA HILANG
+      CartController.instance.clearCart();
+
       _showSnackBar('Registrasi berhasil');
       Navigator.pushReplacement(
         context,
@@ -258,7 +253,7 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   /// ===============================
-  /// REGISTER GOOGLE (LANGSUNG BERANDA)
+  /// REGISTER GOOGLE (SUDAH BENAR)
   /// ===============================
   Future<void> _registerGoogle() async {
     final error = await controller.registerWithGoogle();
@@ -266,6 +261,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!mounted) return;
 
     if (error == null) {
+      CartController.instance.clearCart();
+
       _showSnackBar('Berhasil masuk dengan Google');
       Navigator.pushAndRemoveUntil(
         context,

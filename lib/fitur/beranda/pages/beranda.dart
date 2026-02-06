@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/product_section.dart';
 import 'kategori_page.dart';
 import 'artikel.dart';
-
-void main() {
-  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: Beranda()));
-}
+import 'cart.dart'; // halaman keranjang
+import '../controller/cart_controller.dart';
 
 class Beranda extends StatefulWidget {
   const Beranda({super.key});
@@ -16,10 +14,7 @@ class Beranda extends StatefulWidget {
 
 class _BerandaState extends State<Beranda> {
   final Color primaryColor = const Color(0xFF1D580B);
-
-  /// ✅ CONTROLLER SEARCH
   final TextEditingController searchController = TextEditingController();
-
   String keyword = "";
 
   @override
@@ -38,10 +33,7 @@ class _BerandaState extends State<Beranda> {
               children: [
                 _buildHeaderWithCart(),
                 _buildCategories(context),
-
-                /// 🔥 PRODUK TERBARU + SEARCH FILTER
                 ProdukTerbaruSection(searchKeyword: keyword),
-
                 const SizedBox(height: 30),
               ],
             ),
@@ -51,7 +43,7 @@ class _BerandaState extends State<Beranda> {
     );
   }
 
-  // ================= HEADER =================
+  // ================= HEADER + SEARCH + CART =================
 
   Widget _buildHeaderWithCart() {
     return Padding(
@@ -73,16 +65,13 @@ class _BerandaState extends State<Beranda> {
               ),
               child: TextField(
                 controller: searchController,
-
-                /// 🔥 SEARCH REALTIME
                 onChanged: (value) {
                   setState(() {
                     keyword = value.toLowerCase();
                   });
                 },
-
                 decoration: const InputDecoration(
-                  hintText: 'Cari pupuk, alat, atau toko...',
+                  hintText: 'Cari Buah dan Sayur Segar...',
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 14),
                   prefixIcon: Icon(Icons.search, color: Colors.green),
                   border: InputBorder.none,
@@ -92,7 +81,56 @@ class _BerandaState extends State<Beranda> {
             ),
           ),
           const SizedBox(width: 12),
-          _iconButton(Icons.shopping_cart_outlined),
+
+          /// ===== ICON CART + BADGE (INI PENAMBAHANNYA) =====
+          ListenableBuilder(
+            listenable: CartController.instance,
+            builder: (context, _) {
+              final totalItem = CartController.instance.totalItem;
+
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KeranjangPage(),
+                    ),
+                  );
+                },
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    _iconButton(Icons.shopping_cart_outlined),
+                    if (totalItem > 0)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 18,
+                            minHeight: 18,
+                          ),
+                          child: Text(
+                            '$totalItem',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

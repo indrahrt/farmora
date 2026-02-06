@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import '../../daftar/pages/daftar.dart';
 import '../../../services/firebase_auth_service.dart';
 
+// ✅ PENAMBAHAN (WAJIB)
+import '../../beranda/controller/cart_controller.dart';
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -183,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   /// ===============================
-  /// LOGIN EMAIL (FIX ERROR MESSAGE)
+  /// LOGIN EMAIL
   /// ===============================
   Future<void> _loginEmail() async {
     final email = emailController.text.trim();
@@ -205,16 +208,17 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await authService.loginWithEmail(email: email, password: password);
 
+  
+      CartController.instance.clearCart();
+
       if (!mounted) return;
 
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const MenuNavigation()),
-        (route) =>
-            false, // User tidak bisa balik ke halaman login setelah masuk
+        (route) => false,
       );
     } catch (e) {
-      /// 🔥 INI KUNCI PERBAIKANNYA
       _showMessage(e.toString());
     }
   }
