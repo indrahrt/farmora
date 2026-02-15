@@ -1,12 +1,25 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // ✅ TAMBAHAN
 import '../../akun/models/product_model.dart';
 import '../controller/cart_controller.dart';
+import '../../kotak_masuk/model/chat_product_model.dart';
+import '../../kotak_masuk/pages/chat_detail_page.dart';
+import '../../akun/controller/product_controller.dart';
+import '../../akun/controller/alamat_controller.dart';
+import '../../akun/pages/alamat.dart';
+import '../../pesanan/pages/buat_pesanan_page.dart';
 
 class DetailProductPage extends StatelessWidget {
   final ProductModel product;
 
-  const DetailProductPage({super.key, required this.product});
+  DetailProductPage({super.key, required this.product});
+
+  final ProductController productController = ProductController();
+  final AlamatController alamatController = AlamatController();
+
+  // ✅ TAMBAHAN: USER LOGIN ASLI
+  final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   final Color primaryColor = const Color(0xFF1D580B);
   final Color priceColor = const Color(0xFF2E7D32);
@@ -75,11 +88,9 @@ class DetailProductPage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     product.name,
-                    textAlign: TextAlign.start,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -106,10 +117,7 @@ class DetailProductPage extends StatelessWidget {
                     padding: EdgeInsets.symmetric(vertical: 24),
                     child: Divider(thickness: 0.5),
                   ),
-
-                  // ✅ ULASAN (SUDAH SESUAI MAU KAMU)
                   _buildReviewSection(),
-
                   const SizedBox(height: 120),
                 ],
               ),
@@ -117,7 +125,124 @@ class DetailProductPage extends StatelessWidget {
           ),
         ],
       ),
-      bottomSheet: _buildBottomSheet(context),
+
+      /// ================= BOTTOM =================
+      bottomSheet: Container(
+        padding: const EdgeInsets.only(
+          left: 20,
+          right: 20,
+          bottom: 30,
+          top: 15,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            FutureBuilder<Map<String, dynamic>?>(
+              future: productController.getSellerCached(product.ownerId),
+              builder: (context, snapshot) {
+                return _buildIconButton(Icons.chat_bubble_outline_rounded, () {
+                  if (!snapshot.hasData || snapshot.data == null) return;
+
+                  final seller = snapshot.data!;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatDetailPage(
+                        // ✅ FIX UTAMA DI SINI
+                        buyerId: currentUserId,
+                        sellerId: product.ownerId,
+                        product: ChatProductModel(
+                          productId: product.createdAt.millisecondsSinceEpoch
+                              .toString(),
+                          name: product.name,
+                          imageBase64: product.imageBase64,
+                          sellerId: product.ownerId,
+                          sellerName: seller['name'] ?? 'Penjual',
+                          sellerPhotoBase64: seller['photoBase64'],
+                        ),
+                      ),
+                    ),
+                  );
+                });
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildIconButton(Icons.add_shopping_cart_rounded, () {
+              final cart = CartController.instance;
+
+              if (cart.isProductInCart(product)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Produk sudah ada dalam keranjang"),
+                  ),
+                );
+              } else {
+                cart.addToCart(product);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Produk berhasil masuk ke keranjang"),
+                  ),
+                );
+              }
+            }),
+            const SizedBox(width: 12),
+            Expanded(
+              child: SizedBox(
+                height: 54,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+
+                    final adaAlamat = await alamatController.hasAlamat();
+
+                    if (!context.mounted) return;
+
+                    Navigator.pop(context);
+
+                    if (!adaAlamat) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AlamatPage()),
+                      );
+                      return;
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BuatPesananPage(product: product),
+                      ),
+                    );
+                  },
+                  child: const Text("Beli Sekarang"),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -132,11 +257,7 @@ class DetailProductPage extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _buildInfoItem(Icons.star_rounded, "0.0", Colors.amber),
-          _buildInfoItem(
-            Icons.shopping_bag_outlined,
-            "0 Terjual",
-            Colors.blueGrey,
-          ),
+          _buildInfoItem(Icons.shopping_bag_outlined, "0 Terjual", Colors.blue),
           _buildInfoItem(
             Icons.inventory_2_outlined,
             "Stok: ${product.stock}",
@@ -147,26 +268,21 @@ class DetailProductPage extends StatelessWidget {
     );
   }
 
-  /// ================= ULASAN (TANPA BUTTON) =================
   Widget _buildReviewSection() {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Ulasan Pembeli",
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 20),
-
+        SizedBox(height: 20),
         Center(
           child: Column(
-            children: const [
+            children: [
               Icon(Icons.rate_review_outlined, size: 48, color: Colors.grey),
               SizedBox(height: 12),
-              Text(
-                "Belum ada ulasan",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
+              Text("Belum ada ulasan"),
             ],
           ),
         ),
@@ -179,78 +295,8 @@ class DetailProductPage extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
+        Text(text),
       ],
-    );
-  }
-
-  // ================= KERANJANG (TIDAK DIUBAH) =================
-
-  Widget _buildBottomSheet(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 30, top: 15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          _buildIconButton(Icons.chat_bubble_outline_rounded, () {}),
-          const SizedBox(width: 12),
-          _buildIconButton(Icons.add_shopping_cart_rounded, () {
-            final cart = CartController.instance;
-
-            if (cart.isProductInCart(product)) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Produk sudah ada dalam keranjang"),
-                  backgroundColor: Colors.black87,
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            } else {
-              cart.addToCart(product);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Produk berhasil masuk ke keranjang"),
-                  backgroundColor: Colors.black87,
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            }
-          }),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SizedBox(
-              height: 54,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
-                onPressed: () {},
-                child: const Text(
-                  "Beli Sekarang",
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -262,10 +308,7 @@ class DetailProductPage extends StatelessWidget {
         border: Border.all(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.black87, size: 22),
-        onPressed: onTap,
-      ),
+      child: IconButton(icon: Icon(icon), onPressed: onTap),
     );
   }
 }

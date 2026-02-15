@@ -1,155 +1,146 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-void main() => runApp(const MaterialApp(home: KotakMasukPage()));
+import '../model/chat_product_model.dart';
+import 'chat_detail_page.dart';
 
-class KotakMasukPage extends StatelessWidget {
+class KotakMasukPage extends StatefulWidget {
   const KotakMasukPage({super.key});
+
+  @override
+  State<KotakMasukPage> createState() => _KotakMasukPageState();
+}
+
+class _KotakMasukPageState extends State<KotakMasukPage> {
+  final Color primaryGreen = const Color.fromARGB(255, 29, 88, 11);
+  String? currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    currentUserId = FirebaseAuth.instance.currentUser?.uid;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5), // Background abu-abu muda
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            // 1. Search Bar
-            _buildSearchBar(),
-            
-            // 2. Tab Bar (Manual/Custom)
-            _buildCustomTabBar(),
-            
-            // 3. List of Messages
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                children: [
-                  _buildChatCard(
-                    "Halo, Kak 👋\nTerima kasih sudah menghubungi Toko Tani Perkasa. Ada yang bisa kami bantu terkait produk kami?",
-                  ),
-                  _buildChatCard(
-                    "Pesanan Kakak sudah kami terima ✅\nSaat ini sedang kami siapkan untuk pengiriman.",
-                  ),
-                  _buildChatCard(
-                    "Pesanan Kakak sudah kami kirim hari ini 🚚\nNomor resi akan otomatis muncul di aplikasi. Terima kasih sudah berbelanja di Toko Tani Perkasa 🌽",
-                  ),
-                ],
-              ),
-            ),
-          ],
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          "Kotak Masuk",
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
         ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
+      body: _buildMessageList(),
     );
   }
 
-  // Widget Search Bar dengan border hitam bulat
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.black, width: 2),
-        ),
-        child: const TextField(
-          decoration: InputDecoration(
-            hintText: 'Cari Pesan',
-            suffixIcon: Icon(Icons.search, color: Colors.black, size: 28),
-            border: InputBorder.none,
-          ),
-        ),
-      ),
-    );
-  }
+  // ================= CHAT LIST =================
+  Widget _buildMessageList() {
+    if (currentUserId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-  // Widget Tab Bar sederhana (Semua, Penjual, Belum Dibaca)
-  Widget _buildCustomTabBar() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black12, width: 1)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _tabItem("Semua", isActive: true),
-          _tabItem("Penjual"),
-          _tabItem("Belum Dibaca"),
-        ],
-      ),
-    );
-  }
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chats')
+          .where(
+            'participants',
+            arrayContains: currentUserId, // 🔥 FILTER USER LOGIN
+          )
+          .orderBy('updatedAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text("Belum ada percakapan"));
+        }
 
-  Widget _tabItem(String title, {bool isActive = false}) {
-    return Column(
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: isActive ? Colors.black : Colors.grey,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (isActive)
-          Container(height: 2, width: 60, color: Colors.orange)
-        else
-          const SizedBox(height: 2),
-      ],
-    );
-  }
+        final docs = snapshot.data!.docs;
 
-  // Widget Kartu Chat sesuai gambar
-  Widget _buildChatCard(String message) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F9F9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black, width: 1.5),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Logo Toko
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.orange[50],
-            ),
-            child: const Icon(Icons.storefront, color: Colors.orange),
-          ),
-          const SizedBox(width: 12),
-          // Isi Pesan
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      "Toko Tani Perkasa",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final data = docs[index].data() as Map<String, dynamic>;
+            final chatProduct = ChatProductModel.fromMap(data['product']);
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChatDetailPage(
+                      product: chatProduct,
+                      buyerId: data['buyerId'],
+                      sellerId: data['sellerId'],
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.verified, color: Colors.green[400], size: 16),
+                  ),
+                );
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    // FOTO TOKO
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundColor: primaryGreen.withValues(
+                        alpha: 0.1,
+                      ), // ✅ FIX
+                      backgroundImage:
+                          data['sellerPhotoBase64'] != null &&
+                              data['sellerPhotoBase64'].isNotEmpty
+                          ? MemoryImage(base64Decode(data['sellerPhotoBase64']))
+                          : null,
+                      child: data['sellerPhotoBase64'] == null
+                          ? Icon(Icons.store, color: primaryGreen)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+
+                    // NAMA TOKO & PESAN TERAKHIR
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data['sellerName'] ?? 'Toko',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            data['lastMessage'] ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 13, color: Colors.black87),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
