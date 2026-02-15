@@ -86,7 +86,7 @@ class _BerandaState extends State<Beranda> {
           ListenableBuilder(
             listenable: CartController.instance,
             builder: (context, _) {
-              final totalItem = CartController.instance.totalItem;
+              final totalItem = CartController.instance.totalProduk;
 
               return GestureDetector(
                 onTap: () {

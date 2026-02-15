@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../controller/cart_controller.dart';
 
+import '../../pesanan/pages/buat_pesanan_page.dart';
+
 class KeranjangPage extends StatelessWidget {
   const KeranjangPage({super.key});
 
@@ -267,10 +269,38 @@ class KeranjangPage extends StatelessWidget {
                       height: 50,
                       width: 170,
                       child: ElevatedButton(
-                        onPressed: cart.totalPrice == 0 ? null : () {},
+                        /// ✅ TAMBAHAN NAVIGASI (TIDAK MENGUBAH STRUKTUR)
+                        onPressed: cart.totalPrice == 0
+                            ? null
+                            : () {
+                                final selectedIndex = cart.items.indexWhere(
+                                  (item) => item.selected,
+                                );
+
+                                if (selectedIndex == -1) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Pilih produk dulu"),
+                                    ),
+                                  );
+                                  return;
+                                }
+
+                                final selectedItem = cart.items[selectedIndex];
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => BuatPesananPage(
+                                      product: selectedItem.product,
+                                      initialQty: selectedItem.quantity,
+                                    ),
+                                  ),
+                                );
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: forestGreen,
-                          foregroundColor: Colors.white, // ✅ FIX TEKS UNGU
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

@@ -37,7 +37,7 @@ class AlamatController {
         .delete();
   }
 
-  /// 🔥 STREAM REALTIME (INI YANG PENTING)
+  /// 🔥 STREAM REALTIME
   Stream<List<AlamatModel>> streamAlamat() {
     return _firestore
         .collection('users')
@@ -49,5 +49,17 @@ class AlamatController {
               .map((doc) => AlamatModel.fromFirestore(doc))
               .toList(),
         );
+  }
+
+  /// ⭐ CEK ADA ALAMAT ATAU TIDAK
+  Future<bool> hasAlamat() async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(_uid)
+        .collection('alamat')
+        .limit(1)
+        .get();
+
+    return snapshot.docs.isNotEmpty;
   }
 }

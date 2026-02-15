@@ -86,3 +86,14 @@ class ProductController {
     return null;
   }
 }
+
+Future<ProductModel?> getProductById(String productId) async {
+  final doc = await FirebaseFirestore.instance
+      .collection('products')
+      .doc(productId)
+      .get();
+
+  if (!doc.exists) return null;
+
+  return ProductModel.fromMap(doc.data()!);
+}

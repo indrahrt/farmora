@@ -88,6 +88,11 @@ class CartController extends ChangeNotifier {
         .fold(0, (sum, e) => sum + e.product.price * e.quantity);
   }
 
+  // ================= JUMLAH PRODUK (UNTUK BADGE ICON) =================
+  int get totalProduk {
+    return _items.length;
+  }
+
   // ================= RESET CART =================
   void clearCart() {
     _items.clear();

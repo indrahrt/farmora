@@ -5,21 +5,36 @@ import '../beranda/pages/beranda.dart';
 import '../../fitur/akun/pages/akun.dart';
 
 class MenuNavigation extends StatefulWidget {
-  const MenuNavigation({super.key});
+  /// 🔥 TAMBAHAN: agar bisa buka tab tertentu
+  final int initialIndex;
+
+  const MenuNavigation({
+    super.key,
+    this.initialIndex = 0, // default ke beranda
+  });
 
   @override
   State<MenuNavigation> createState() => _MenuNavigationState();
 }
 
 class _MenuNavigationState extends State<MenuNavigation> {
-  int _currentIndex = 0;
+  /// pakai late karena akan diisi dari parameter
+  late int _currentIndex;
 
   final List<Widget> _pages = [
     const Beranda(),
     const PesananPage(),
     const KotakMasukPage(),
-    const ProfilPage(), 
+    const ProfilPage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🔥 ambil index dari luar
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +45,6 @@ class _MenuNavigationState extends State<MenuNavigation> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              // Perbaikan deprecated: menggunakan withValues
               color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               spreadRadius: 2,
@@ -40,7 +54,11 @@ class _MenuNavigationState extends State<MenuNavigation> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.white,
           elevation: 0,
